@@ -1,0 +1,24 @@
+{
+    "update_id": 400004,
+    "edited_message": {
+        "message_id": 101,
+        "from": {
+            "id": 123456789,
+            "is_bot": false,
+            "first_name": "علی",
+            "last_name": "رضایی",
+            "username": "ali_r",
+            "language_code": "fa"
+        },
+        "chat": {
+            "id": 123456789,
+            "first_name": "علی",
+            "last_name": "رضایی",
+            "username": "ali_r",
+            "type": "private"
+        },
+        "date": 1760000000,
+        "edit_date": 1760000300,
+        "text": "سلام، پیام ویرایش شد."
+    }
+}

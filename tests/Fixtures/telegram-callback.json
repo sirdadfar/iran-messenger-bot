@@ -1,0 +1,34 @@
+{
+    "update_id": 400003,
+    "callback_query": {
+        "id": "4382900011223344556",
+        "from": {
+            "id": 123456789,
+            "is_bot": false,
+            "first_name": "علی",
+            "last_name": "رضایی",
+            "username": "ali_r",
+            "language_code": "fa"
+        },
+        "message": {
+            "message_id": 101,
+            "from": {
+                "id": 555000111,
+                "is_bot": true,
+                "first_name": "SubVPN Bot",
+                "username": "subvpn_bot"
+            },
+            "chat": {
+                "id": 123456789,
+                "first_name": "علی",
+                "last_name": "رضایی",
+                "username": "ali_r",
+                "type": "private"
+            },
+            "date": 1760000200,
+            "text": "سفارش خود را تأیید کنید:"
+        },
+        "chat_instance": "-1234567890123456789",
+        "data": "confirm:42"
+    }
+}

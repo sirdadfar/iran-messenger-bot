@@ -1,0 +1,60 @@
+{
+    "name": "sirdadfar/iran-messenger-bot",
+    "description": "One clean PHP API for building bots on Telegram, Bale, Eitaa and Rubika.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "telegram",
+        "bale",
+        "eitaa",
+        "rubika",
+        "bot",
+        "messenger",
+        "iran",
+        "php"
+    ],
+    "authors": [
+        {
+            "name": "sirdadfar"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "suggest": {
+        "illuminate/support": "Required only for the optional Laravel service provider and facade.",
+        "illuminate/contracts": "Required only for the optional Laravel service provider and facade."
+    },
+    "autoload": {
+        "psr-4": {
+            "IranMessenger\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "IranMessenger\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "IranMessenger\\Laravel\\MessengerServiceProvider"
+            ],
+            "aliases": {
+                "IranMessenger": "IranMessenger\\Laravel\\Messenger"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

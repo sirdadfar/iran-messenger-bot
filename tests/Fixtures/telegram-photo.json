@@ -1,0 +1,36 @@
+{
+    "update_id": 400002,
+    "message": {
+        "message_id": 102,
+        "from": {
+            "id": 987654321,
+            "is_bot": false,
+            "first_name": "سارا",
+            "username": "sara_dev",
+            "language_code": "fa"
+        },
+        "chat": {
+            "id": -1001234567890,
+            "title": "تیم پشتیبانی",
+            "type": "supergroup"
+        },
+        "date": 1760000100,
+        "caption": "اسکرین‌شات پنل",
+        "photo": [
+            {
+                "file_id": "AgACAgQAAxkBAAI-small",
+                "file_unique_id": "AQAD-small",
+                "width": 90,
+                "height": 90,
+                "file_size": 1234
+            },
+            {
+                "file_id": "AgACAgQAAxkBAAI-large",
+                "file_unique_id": "AQAD-large",
+                "width": 800,
+                "height": 800,
+                "file_size": 98765
+            }
+        ]
+    }
+}
