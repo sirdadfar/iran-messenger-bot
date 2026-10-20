@@ -4,6 +4,23 @@ All notable changes to `iran-messenger-bot` are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [1.1.0] - 2026-10-21
+
+### Added
+
+- `Support\Webhook`: `verify()`, `verifyServerHeader()`, `header()`, `isValidSecret()`, `generateSecret()`, `decode()` and `update()`. The secret is compared with `hash_equals()`, the header lookup is case-insensitive and accepts both `HTTP_X_...` and `x-...` spellings, and bodies are capped at 1 MiB.
+- `Support\Value`: defensive scalar access so array or object values in an attacker-controlled webhook payload cannot trigger "Array to string conversion" or a `TypeError` in the DTO factories.
+- `tests/Support/WebhookTest.php`, `tests/Dto/MalformedPayloadTest.php` and `tests/Adapter/AdapterHardeningTest.php`.
+
+### Changed
+
+- `base_url` must be an absolute `http://` or `https://` URL without embedded credentials.
+- Provider method overrides (`methods` option) must be alphanumeric identifiers, so they cannot escape the `/bot{token}/` path.
+- `Http\CurlClient` pins `CURLOPT_SSL_VERIFYPEER`, `CURLOPT_SSL_VERIFYHOST=2` and the HTTP/HTTPS protocol allowlist, and rejects non-HTTP URLs before `curl_init()`.
+- README (both languages) documents webhook hardening with the new helpers.
+
 ## [1.0.0] - 2026-10-20
 
 ### Added

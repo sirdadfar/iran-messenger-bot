@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IranMessenger\Dto;
 
 use IranMessenger\Exception\ValidationException;
+use IranMessenger\Support\Value;
 
 /**
  * Immutable chat (private, group, supergroup or channel).
@@ -36,11 +37,11 @@ final class Chat
 
         return new self(
             id: (int) $data['id'],
-            type: (string) ($data['type'] ?? 'unknown'),
-            title: isset($data['title']) ? (string) $data['title'] : null,
-            username: isset($data['username']) ? (string) $data['username'] : null,
-            firstName: isset($data['first_name']) ? (string) $data['first_name'] : null,
-            lastName: isset($data['last_name']) ? (string) $data['last_name'] : null,
+            type: Value::string($data['type'] ?? null) ?? 'unknown',
+            title: Value::string($data['title'] ?? null),
+            username: Value::string($data['username'] ?? null),
+            firstName: Value::string($data['first_name'] ?? null),
+            lastName: Value::string($data['last_name'] ?? null),
             raw: $data,
         );
     }

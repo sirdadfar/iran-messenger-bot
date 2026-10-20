@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IranMessenger\Dto;
 
 use IranMessenger\Exception\ValidationException;
+use IranMessenger\Support\Value;
 
 /**
  * Immutable messenger user.
@@ -38,10 +39,10 @@ final class User
         return new self(
             id: (int) $data['id'],
             isBot: (bool) ($data['is_bot'] ?? false),
-            firstName: (string) ($data['first_name'] ?? ''),
-            lastName: isset($data['last_name']) ? (string) $data['last_name'] : null,
-            username: isset($data['username']) ? (string) $data['username'] : null,
-            languageCode: isset($data['language_code']) ? (string) $data['language_code'] : null,
+            firstName: Value::string($data['first_name'] ?? null) ?? '',
+            lastName: Value::string($data['last_name'] ?? null),
+            username: Value::string($data['username'] ?? null),
+            languageCode: Value::string($data['language_code'] ?? null),
             isPremium: isset($data['is_premium']) ? (bool) $data['is_premium'] : null,
             raw: $data,
         );

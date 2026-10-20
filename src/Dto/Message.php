@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IranMessenger\Dto;
 
 use IranMessenger\Exception\ValidationException;
+use IranMessenger\Support\Value;
 
 /**
  * Immutable incoming message.
@@ -64,8 +65,8 @@ final class Message
             date: (int) ($data['date'] ?? 0),
             chat: Chat::fromArray($data['chat']),
             from: $from,
-            text: isset($data['text']) ? (string) $data['text'] : null,
-            caption: isset($data['caption']) ? (string) $data['caption'] : null,
+            text: Value::string($data['text'] ?? null),
+            caption: Value::string($data['caption'] ?? null),
             photo: $photo,
             document: isset($data['document']) && is_array($data['document']) ? $data['document'] : null,
             replyToMessage: $replyTo,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IranMessenger\Dto;
 
 use IranMessenger\Exception\ValidationException;
+use IranMessenger\Support\Value;
 
 /**
  * Immutable callback query triggered by an inline keyboard.
@@ -46,9 +47,9 @@ final class CallbackQuery
             id: $data['id'],
             from: User::fromArray($data['from']),
             message: $message,
-            data: isset($data['data']) ? (string) $data['data'] : null,
-            chatInstance: isset($data['chat_instance']) ? (string) $data['chat_instance'] : null,
-            inlineMessageId: isset($data['inline_message_id']) ? (string) $data['inline_message_id'] : null,
+            data: Value::string($data['data'] ?? null),
+            chatInstance: Value::string($data['chat_instance'] ?? null),
+            inlineMessageId: Value::string($data['inline_message_id'] ?? null),
             raw: $data,
         );
     }

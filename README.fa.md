@@ -1,6 +1,6 @@
 # iran-messenger-bot
 
-[English README](README.md)
+[English README](README.md) · [سیاست امنیتی](SECURITY.md) · [تغییرات](CHANGELOG.md)
 
 یک کتابخانهٔ PHP مستقل از فریم‌ورک که برای ساخت ربات روی پیام‌رسان‌های ایرانی و منطقه‌ای ساخته شده است: **تلگرام، بله، ایتا و روبیکا**.
 
@@ -228,28 +228,29 @@ declare(strict_types=1);
 
 require __DIR__ . '/vendor/autoload.php';
 
+use IranMessenger\Exception\ValidationException;
 use IranMessenger\MessengerFactory;
+use IranMessenger\Support\Webhook;
 
 $bot = MessengerFactory::make('telegram', (string) getenv('TELEGRAM_BOT_TOKEN'));
 
-// بررسی هدر امنیتی وبهوک (در تلگرام)
+// ۱) تأیید هدر امنیتی وبهوک، پیش از خواندن و تفسیر بدنه.
+//    مقایسه در زمان ثابت (hash_equals) و هدر با هر یک از شکل‌های
+//    HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN یا x-telegram-bot-api-secret-token پیدا می‌شود.
 $secret = (string) getenv('TELEGRAM_WEBHOOK_SECRET');
-$provided = (string) ($_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? '');
 
-if ($secret !== '' && !hash_equals($secret, $provided)) {
+if ($secret !== '' && !Webhook::verifyServerHeader($_SERVER, $secret)) {
     http_response_code(403);
     exit;
 }
 
-$raw = file_get_contents('php://input');
-$payload = json_decode($raw !== false ? $raw : '', true);
-
-if (!is_array($payload)) {
+// ۲) خواندن بدنه با سقف ۱ مگابایت و JSON اجباری.
+try {
+    $update = Webhook::update((string) file_get_contents('php://input'));
+} catch (ValidationException) {
     http_response_code(400);
     exit;
 }
-
-$update = $bot->parseUpdate($payload);
 
 if ($update->message !== null && $update->message->text === '/start') {
     $bot->sendMessage($update->message->chat->id, 'سلام! خوش آمدید.');
@@ -288,6 +289,18 @@ $bot->deleteWebhook(['drop_pending_updates' => true]);
 ```
 
 > آدرس وبهوک باید عمومی و HTTPS باشد. برای Bale هدر امنیتی ممکن است متفاوت باشد؛ آن را مطابق مستندات رسمی همان سرویس بررسی کنید.
+
+### تولید secret و محدودیت‌ها
+
+```php
+// ۳۲ بایت تصادفی، خروجی URL-safe و سازگار با secret_token تلگرام
+$webhookSecret = IranMessenger\Support\Webhook::generateSecret();
+```
+
+- `Webhook::verifyServerHeader($_SERVER, $secret)` مقدار خالی یا نادرست را رد می‌کند.
+- `Webhook::decode()` بدنهٔ بزرگ‌تر از ۱ مگابایت، JSON نامعتبر و بدنهٔ غیرآبجکت (مثل رشته یا عدد) را با `ValidationException` رد می‌کند.
+- `Webhook::update()` همان دو مرحله را یک‌جا انجام می‌دهد.
+- برای سرویس‌هایی که هدر امنیتی ندارند، یک توکن تصادفی در مسیر URL بگذارید و همان را با `Webhook::verify()` مقایسه کنید؛ این کتابخانه نمی‌تواند امضایی بسازد که سرویس ارسال نمی‌کند.
 
 ## دریافت پیام با Polling
 
@@ -365,7 +378,10 @@ try {
 - `ApiException` برای پاسخ غیر ۲xx، پاکت `{"ok": false}` یا وضعیت ناموفق روبیکا پرتاب می‌شود و متد، payload و پاسخ سرویس‌دهنده را در اختیار شما می‌گذارد.
 - `ValidationException` قبل از ارسال درخواست پرتاب می‌شود: توکن خالی، متن خالی، شناسهٔ صفر، URL نامعتبر و مانند آن.
 - `UnsupportedFeatureException` وقتی پرتاب می‌شود که قابلیت موردنظر روی آن پلتفرم وجود ندارد.
-- توکن ربات در پیام استثنا، `__toString()`، payload ذخیره‌شده و پاسخ ذخیره‌شده حذف می‌شود.
+- توکن ربات در پیام استثنا، `__toString()`، payload ذخیره‌شده و پاسخ ذخیره‌شده حذف می‌شود؛ خطای cURL (که می‌تواند آدرس حاوی توکن را داشته باشد) هم پاک‌سازی می‌شود.
+- `CurlClient` تأیید گواهی و نام میزبان TLS را صریحاً فعال می‌کند، redirect را دنبال نمی‌کند و فقط `http`/`https` را می‌پذیرد.
+- `base_url` باید URL مطلق باشد و نام کاربری/رمز داخل آن مجاز نیست؛ بازنویسی نام متد (`methods`) فقط شناسهٔ حروف‌وعدد می‌پذیرد تا درخواست از مسیر `/bot{token}/` خارج نشود.
+- وبهوک: `Webhook::verifyServerHeader()` با `hash_equals` مقایسه می‌کند و `Webhook::decode()` بدنهٔ بیش از ۱ مگابایت یا JSON غیرآبجکت را رد می‌کند. جزئیات در [SECURITY.md](SECURITY.md).
 
 **هرگز توکن را در کد، مخزن Git یا خروجی مرورگر قرار ندهید.** از متغیر محیطی استفاده کنید:
 
@@ -449,7 +465,8 @@ $bot->supports('inline_keyboard'); // true یا false
 - API ایتا (EitaaYar) ارسال‌محور است. نام متدها و آدرس پایه بر اساس شکل عمومی مستندات آن انتخاب شده‌اند؛ اگر حساب شما نسخهٔ دیگری دارد، با `base_url` و `methods` تنظیم کنید.
 - ساختار `chat_keypad` روبیکا بر اساس شکل عمومی API v3 پیاده شده است. ممکن است نسخهٔ حساب شما فیلدهای بیشتری بخواهد.
 - Bale زیرمجموعهٔ سازگار با تلگرام را پوشش می‌دهد؛ برخی متدهای تلگرام ممکن است روی Bale وجود نداشته باشند.
-- آلبوم/مدیا گروپ، آپلود هم‌زمان، صف، retry خودکار و rate-limit داخلی پیاده‌سازی نشده‌اند.
+- آلبوم/مدیا گروپ، آپلود هم‌زمان، صف و retry خودکار پیاده‌سازی نشده‌اند. پاسخ `429` به‌صورت `ApiException` برمی‌گردد؛ backoff را در برنامهٔ خودتان اعمال کنید (کتابخانه خودش retry نمی‌کند تا پیام دوبار ارسال نشود).
+- هر آپدیت ممکن است دوبار تحویل شود؛ بر اساس `Update::$updateId` در سمت شما deduplicate کنید.
 - طول پیام با `mb_strlen` (کدپوینت یونیکد) سنجیده می‌شود. برخی سرویس‌دهنده‌ها ایموجی را دو واحد حساب می‌کنند؛ برای متن پرایموجی سقف کمتری تنظیم کنید.
 - آداپترهای Eitaa و Rubika در حالت واقعی تست نشده‌اند؛ برای production ابتدا یک محیط آزمایشی بگیرید.
 
@@ -462,7 +479,7 @@ composer install
 vendor/bin/phpunit
 ```
 
-وضعیت فعلی: **۶۳ تست و ۳۰۹ assertion**، همه سبز. lint همهٔ فایل‌های PHP و `composer validate --strict` هم در CI اجرا می‌شوند.
+وضعیت فعلی: **۹۰ تست و ۳۶۹ assertion**، همه سبز. lint همهٔ فایل‌های PHP، `composer validate --strict` و `composer audit` هم در CI اجرا می‌شوند (ماتریس PHP 8.1 تا 8.4).
 
 ## مشارکت
 

@@ -1,6 +1,6 @@
 # iran-messenger-bot
 
-[نسخهٔ فارسی (primary)](README.fa.md)
+[نسخهٔ فارسی (primary)](README.fa.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md)
 
 A framework-agnostic PHP library for building bots on Iranian and regional messengers: **Telegram, Bale, Eitaa and Rubika**.
 
@@ -209,27 +209,28 @@ declare(strict_types=1);
 
 require __DIR__ . '/vendor/autoload.php';
 
+use IranMessenger\Exception\ValidationException;
 use IranMessenger\MessengerFactory;
+use IranMessenger\Support\Webhook;
 
 $bot = MessengerFactory::make('telegram', (string) getenv('TELEGRAM_BOT_TOKEN'));
 
+// 1) Verify the webhook secret before trusting the body. The comparison is
+//    constant-time and accepts HTTP_X_... or x-... header spellings.
 $secret = (string) getenv('TELEGRAM_WEBHOOK_SECRET');
-$provided = (string) ($_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? '');
 
-if ($secret !== '' && !hash_equals($secret, $provided)) {
+if ($secret !== '' && !Webhook::verifyServerHeader($_SERVER, $secret)) {
     http_response_code(403);
     exit;
 }
 
-$raw = file_get_contents('php://input');
-$payload = json_decode($raw !== false ? $raw : '', true);
-
-if (!is_array($payload)) {
+// 2) Read the body with a 1 MiB cap and strict JSON parsing.
+try {
+    $update = Webhook::update((string) file_get_contents('php://input'));
+} catch (ValidationException) {
     http_response_code(400);
     exit;
 }
-
-$update = $bot->parseUpdate($payload);
 
 if ($update->message !== null && $update->message->text === '/start') {
     $bot->sendMessage($update->message->chat->id, 'Welcome!');
@@ -268,6 +269,18 @@ $bot->deleteWebhook(['drop_pending_updates' => true]);
 ```
 
 > Use a public HTTPS URL. Bale may use a different webhook security header; verify it against the official documentation.
+
+### Secret generation and limits
+
+```php
+// 32 random bytes, URL-safe and valid as a Telegram secret_token.
+$webhookSecret = IranMessenger\Support\Webhook::generateSecret();
+```
+
+- `Webhook::verifyServerHeader($_SERVER, $secret)` rejects an empty or wrong header.
+- `Webhook::decode()` rejects bodies over 1 MiB, invalid JSON and non-object JSON (a string or a number) with `ValidationException`.
+- `Webhook::update()` does both steps in one call.
+- If a platform has no secret header, put a random token in the URL path and compare it with `Webhook::verify()`; this library cannot create a signature the provider does not send.
 
 ## Polling
 
@@ -440,7 +453,7 @@ composer install
 vendor/bin/phpunit
 ```
 
-Current status: **63 tests, 309 assertions**, all passing. CI also runs `composer validate --strict` and `php -l` on every PHP file.
+Current status: **90 tests, 369 assertions**, all passing. CI also runs `composer validate --strict`, `composer audit` and `php -l` on every PHP file (PHP 8.1–8.4 matrix).
 
 ## Contributing
 

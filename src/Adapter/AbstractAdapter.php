@@ -373,6 +373,15 @@ abstract class AbstractAdapter implements Messenger
             $override = trim($overrides[$logicalMethod]);
 
             if ($override !== '') {
+                // The method becomes a path segment of the provider URL, so it
+                // must not contain "..", "/" or anything else that could move
+                // the request to a different path.
+                if (preg_match('/^[A-Za-z][A-Za-z0-9_]*$/', $override) !== 1) {
+                    throw new ValidationException(
+                        sprintf('Provider method override for "%s" must be an alphanumeric identifier.', $logicalMethod),
+                    );
+                }
+
                 return $override;
             }
         }
@@ -400,7 +409,24 @@ abstract class AbstractAdapter implements Messenger
             throw new ValidationException('The "base_url" option must be a non-empty string.');
         }
 
-        return rtrim(trim($base), '/');
+        $base = rtrim(trim($base), '/');
+        $parts = parse_url($base);
+
+        if (
+            !is_array($parts)
+            || !isset($parts['scheme'], $parts['host'])
+            || !in_array(strtolower((string) $parts['scheme']), ['http', 'https'], true)
+        ) {
+            throw new ValidationException('The "base_url" option must be an absolute http:// or https:// URL.');
+        }
+
+        // Credentials inside the base URL would be silently ignored by cURL
+        // (or logged by a proxy) and are never part of a Bot API endpoint.
+        if (isset($parts['user']) || isset($parts['pass'])) {
+            throw new ValidationException('The "base_url" option must not contain a username or password.');
+        }
+
+        return $base;
     }
 
     /**
